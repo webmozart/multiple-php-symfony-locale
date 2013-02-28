@@ -1,6 +1,6 @@
 # phpenv and php-build installation
 
-NOTE: these are quick notes. I used phpenv and php-build to create an environment suitable for the Symfony Locale component development. The definitions files are old, just for documentation purposes. I will post a better how to at my [blog](http://blog.eriksen.com.br).
+*NOTE*: these are quick notes. I used phpenv and php-build to create an environment suitable for the Symfony Locale component development. The definitions files are old, just for documentation purposes. I will post a better how to at my [blog](http://blog.eriksen.com.br). Commands tested in a 64bit Debian Squeeze.
 
 First, install some dependencies to compile PHP:
 
@@ -33,7 +33,7 @@ Change line 59:
 
     59     <auto_discover>1</auto_discover>
 
-Build (yeah, you need to change to the definitions directory):
+Build (yeah, you need to change to the definitions directory - build ICU 49 first):
 
     $ cd ~/definitions
     $ phpenv build 5.4.12-icu-49
@@ -138,3 +138,121 @@ Set a different PHP version to the global environment:
     intl.error_level => 0 => 0
 
 Now you're done.
+
+## Building multiple ICU versions
+
+ICU is simple to build.
+
+    $ cd /opt/
+    $ sudo mkdir src c
+    $ cd src/
+    $ sudo mkdir icu
+
+ICU 4.0 (patched):
+
+    $ cd /opt/src/icu
+    $ sudo wget http://download.icu-project.org/files/icu4c/4.0.1/icu4c-4_0_1-src.tgz
+    $ sudo tar xzvf icu4c-4_0_1-src.tgz
+    $ sudo mv icu 4.0
+    $ cd 4.0
+    $ sudo wget https://raw.github.com/gist/893710/ce5f865d4be7b36419b39e82d64d718bcde9f878/icu-4.0-gcc-4.4.patch
+    $ sudo patch --verbose -p0 < icu-4.0-gcc-4.4.patch
+    $ cd source
+    $ sudo mkdir -p /opt/c/icu/4.0
+    $ sudo ./configure --prefix=/opt/c/icu/4.0
+    $ sudo make
+    $ sudo make install
+
+ICU 4.2:
+
+    $ cd /opt/src/icu
+    $ sudo wget http://download.icu-project.org/files/icu4c/4.2.1/icu4c-4_2_1-src.tgz
+    $ sudo tar xzvf icu4c-4_2_1-src.tgz
+    $ sudo mv icu 4.2
+    $ cd 4.2/source
+    $ sudo mkdir -p /opt/c/icu/4.2
+    $ sudo ./configure --prefix=/opt/c/icu/4.2
+    $ sudo make
+    $ sudo make install
+
+ICU 4.4:
+
+    $ cd /opt/src/icu
+    $ sudo wget http://download.icu-project.org/files/icu4c/4.4.2/icu4c-4_4_2-src.tgz
+    $ sudo tar xzvf icu4c-4_4_2-src.tgz
+    $ sudo mv icu 4.4
+    $ cd 4.4/source
+    $ sudo mkdir -p /opt/c/icu/4.4
+    $ sudo ./configure --prefix=/opt/c/icu/4.4
+    $ sudo make
+    $ sudo make install
+
+ICU 4.6:
+
+    $ cd /opt/src/icu
+    $ sudo wget http://download.icu-project.org/files/icu4c/4.6.1/icu4c-4_6_1-src.tgz
+    $ sudo tar xzvf icu4c-4_6_1-src.tgz
+    $ sudo mv icu 4.6
+    $ cd 4.6/source
+    $ sudo mkdir -p /opt/c/icu/4.6
+    $ sudo ./configure --prefix=/opt/c/icu/4.6
+    $ sudo make
+    $ sudo make install
+
+ICU 4.8:
+
+    $ cd /opt/src/icu
+    $ sudo wget http://download.icu-project.org/files/icu4c/4.8.1.1/icu4c-4_8_1_1-src.tgz
+    $ sudo tar xzvf icu4c-4_8_1_1-src.tgz
+    $ sudo mv icu 4.8
+    $ cd 4.8/source
+    $ sudo mkdir -p /opt/c/icu/4.8
+    $ sudo ./configure --prefix=/opt/c/icu/4.8
+    $ sudo make
+    $ sudo make install
+
+ICU 49:
+
+    $ cd /opt/src/icu
+    $ sudo wget http://download.icu-project.org/files/icu4c/49.1.2/icu4c-49_1_2-src.tgz
+    $ sudo tar xzvf icu4c-49_1_2-src.tgz
+    $ sudo mv icu 49
+    $ cd 49/source
+    $ sudo mkdir -p /opt/c/icu/49
+    $ sudo ./configure --prefix=/opt/c/icu/49
+    $ sudo make
+    $ sudo make install
+
+To build the res files, I recommend using the `genrb` command from the same ICU install. The problem is that using a specific `genrb` (e.g. `/opt/c/icu/4.0/bin/genrb`) do not work:
+
+    $ ldd /opt/c/icu/4.0/bin/genrb 
+    	linux-vdso.so.1 =>  (0x00007fff3fbba000)
+    	libicui18n.so.40 => not found
+    	libicutu.so.40 => not found
+    	libicuuc.so.40 => not found
+    	libicudata.so.40 => not found
+    	libpthread.so.0 => /lib/libpthread.so.0 (0x00007f1ac547e000)
+    	libstdc++.so.6 => /usr/lib/libstdc++.so.6 (0x00007f1ac5169000)
+    	libm.so.6 => /lib/libm.so.6 (0x00007f1ac4ee7000)
+    	libgcc_s.so.1 => /lib/libgcc_s.so.1 (0x00007f1ac4cd1000)
+    	libc.so.6 => /lib/libc.so.6 (0x00007f1ac496e000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007f1ac56a3000)
+
+You need to export `LD_LIBRARY_PATH` to make it working:
+
+    $ export LD_LIBRARY_PATH='/opt/c/icu/4.0/lib:/opt/c/icu/4.2/lib:/opt/c/icu/4.4/lib:/opt/c/icu/4.6/lib:/opt/c/icu/4.8/lib:/opt/c/icu/49/lib'
+
+Check:
+
+    $ ldd /opt/c/icu/4.0/bin/genrb 
+    	linux-vdso.so.1 =>  (0x00007fffe17ff000)
+    	libicui18n.so.40 => /opt/c/icu/4.0/lib/libicui18n.so.40 (0x00007f4b2b462000)
+    	libicutu.so.40 => /opt/c/icu/4.0/lib/libicutu.so.40 (0x00007f4b2b245000)
+    	libicuuc.so.40 => /opt/c/icu/4.0/lib/libicuuc.so.40 (0x00007f4b2aefe000)
+    	libicudata.so.40 => /opt/c/icu/4.0/lib/libicudata.so.40 (0x00007f4b29fb9000)
+    	libpthread.so.0 => /lib/libpthread.so.0 (0x00007f4b29d96000)
+    	libstdc++.so.6 => /usr/lib/libstdc++.so.6 (0x00007f4b29a82000)
+    	libm.so.6 => /lib/libm.so.6 (0x00007f4b29800000)
+    	libgcc_s.so.1 => /lib/libgcc_s.so.1 (0x00007f4b295e9000)
+    	libc.so.6 => /lib/libc.so.6 (0x00007f4b29287000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007f4b2b7f5000)
